@@ -25,16 +25,18 @@ import (
 	"github.com/etcd-io/auger/pkg/scheme"
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type getFlagpole struct {
-	Namespace string
-	Output    string
-	ChunkSize int64
-	Watch     bool
-	WatchOnly bool
-	Prefix    string
+	Namespace    string
+	Output       string
+	ChunkSize    int64
+	Watch        bool
+	WatchOnly    bool
+	Prefix       string
+	AllNamespace bool
 }
 
 func newCtlGetCommand() *cobra.Command {
@@ -64,6 +66,7 @@ func newCtlGetCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&flags.WatchOnly, "watch-only", false, "watch for changes to the requested object(s), without listing/getting first")
 	cmd.Flags().Int64Var(&flags.ChunkSize, "chunk-size", 500, "chunk size of the list pager")
 	cmd.Flags().StringVar(&flags.Prefix, "prefix", "/registry", "prefix to prepend to the resource")
+	cmd.Flags().BoolVarP(&flags.AllNamespace, "all-namespace", "A", false, "all namespace")
 
 	return cmd
 }
@@ -73,7 +76,7 @@ func getCommand(ctx context.Context, etcdclient client.Client, flags *getFlagpol
 	var targetName string
 	var targetNamespace string
 	if len(args) != 0 {
-		// TODO: Support get information from CRD and scheme.Codecs
+		// TODO: Support get information from CRD
 		//       Support short name
 		//       Check for namespaced
 
@@ -85,6 +88,15 @@ func getCommand(ctx context.Context, etcdclient client.Client, flags *getFlagpol
 		targetNamespace = flags.Namespace
 		if len(args) >= 2 {
 			targetName = args[1]
+		}
+
+		if correctGr, namespaced, found := wellknown.CorrectGroupResource(gr); found {
+			targetGr = correctGr
+			if !namespaced || flags.AllNamespace {
+				targetNamespace = ""
+			} else if flags.Namespace == "" {
+				targetNamespace = "default"
+			}
 		}
 	}
 

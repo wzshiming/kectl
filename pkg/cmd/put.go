@@ -28,6 +28,7 @@ import (
 	"github.com/etcd-io/auger/pkg/scheme"
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,10 +38,11 @@ import (
 )
 
 type putFlagpole struct {
-	Namespace string
-	Output    string
-	Path      string
-	Prefix    string
+	Namespace    string
+	Output       string
+	Path         string
+	Prefix       string
+	AllNamespace bool
 }
 
 func newCtlPutCommand() *cobra.Command {
@@ -68,6 +70,8 @@ func newCtlPutCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&flags.Namespace, "namespace", "n", "", "namespace of resource")
 	cmd.Flags().StringVar(&flags.Prefix, "prefix", "/registry", "prefix to prepend to the resource")
 	cmd.Flags().StringVar(&flags.Path, "path", "", "path of the file")
+	cmd.Flags().BoolVarP(&flags.AllNamespace, "all-namespace", "A", false, "all namespace")
+
 	return cmd
 }
 
@@ -88,8 +92,9 @@ func putCommand(ctx context.Context, etcdclient client.Client, flags *putFlagpol
 
 	var wantGr *schema.GroupResource
 	var wantName string
+	wantNamespace := flags.Namespace
 	if len(args) != 0 {
-		// TODO: Support get information from CRD and scheme.Codecs
+		// TODO: Support get information from CRD
 		//       Support short name
 		//       Check for namespaced
 
@@ -100,6 +105,15 @@ func putCommand(ctx context.Context, etcdclient client.Client, flags *putFlagpol
 		wantGr = &gr
 		if len(args) >= 2 {
 			wantName = args[1]
+		}
+
+		if correctGr, namespaced, found := wellknown.CorrectGroupResource(gr); found {
+			wantGr = &correctGr
+			if !namespaced || flags.AllNamespace {
+				wantNamespace = ""
+			} else if flags.Namespace == "" {
+				wantNamespace = "default"
+			}
 		}
 	}
 
@@ -133,7 +147,7 @@ func putCommand(ctx context.Context, etcdclient client.Client, flags *putFlagpol
 		targetGr := targetGvr.GroupResource()
 		targetNamespace := obj.GetNamespace()
 
-		if targetNamespace != "" && flags.Namespace != "" && targetNamespace != flags.Namespace {
+		if targetNamespace != "" && wantNamespace != "" && targetNamespace != wantNamespace {
 			return nil
 		}
 

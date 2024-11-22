@@ -23,13 +23,15 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type delFlagpole struct {
-	Namespace string
-	Output    string
-	Prefix    string
+	Namespace    string
+	Output       string
+	Prefix       string
+	AllNamespace bool
 }
 
 func newCtlDelCommand() *cobra.Command {
@@ -56,6 +58,8 @@ func newCtlDelCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&flags.Output, "output", "o", "key", "output format. One of: (key, none).")
 	cmd.Flags().StringVarP(&flags.Namespace, "namespace", "n", "", "namespace of resource")
 	cmd.Flags().StringVar(&flags.Prefix, "prefix", "/registry", "prefix to prepend to the resource")
+	cmd.Flags().BoolVarP(&flags.AllNamespace, "all-namespace", "A", false, "all namespace")
+
 	return cmd
 }
 
@@ -64,7 +68,7 @@ func delCommand(ctx context.Context, etcdclient client.Client, flags *delFlagpol
 	var targetName string
 	var targetNamespace string
 	if len(args) != 0 {
-		// TODO: Support get information from CRD and scheme.Codecs
+		// TODO: Support get information from CRD
 		//       Support short name
 		//       Check for namespaced
 
@@ -76,6 +80,15 @@ func delCommand(ctx context.Context, etcdclient client.Client, flags *delFlagpol
 		targetNamespace = flags.Namespace
 		if len(args) >= 2 {
 			targetName = args[1]
+		}
+
+		if correctGr, namespaced, found := wellknown.CorrectGroupResource(gr); found {
+			targetGr = correctGr
+			if !namespaced || flags.AllNamespace {
+				targetNamespace = ""
+			} else if flags.Namespace == "" {
+				targetNamespace = "default"
+			}
 		}
 	}
 
