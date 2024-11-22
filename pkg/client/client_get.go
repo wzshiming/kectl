@@ -19,116 +19,90 @@ package client
 import (
 	"context"
 	"fmt"
+	"go.etcd.io/etcd/api/v3/mvccpb"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func (c *client) Get(ctx context.Context, prefix string, opOpts ...OpOption) (rev int64, err error) {
+	if prefix == "" {
+		return 0, fmt.Errorf("prefix is required")
+	}
+
 	opt := opOption(opOpts)
 	if opt.response == nil {
 		return 0, fmt.Errorf("response is required")
 	}
 
-	prefix, single, err := c.getPrefix(prefix, opt)
+	path, single, err := getPrefix(prefix, opt.gr, opt.name, opt.namespace)
 	if err != nil {
 		return 0, err
 	}
 
-	opts := []clientv3.OpOption{}
-	if opt.keysOnly {
-		opts = append(opts, clientv3.WithKeysOnly())
+	opts := make([]clientv3.OpOption, 0, 3)
+
+	// specify whether it is a key or a prefix
+	if !single {
+		opts = append(opts, clientv3.WithPrefix())
 	}
 
-	if single || opt.pageLimit == 0 {
-		if !single {
-			opts = append(opts, clientv3.WithPrefix())
-		}
-		resp, err := c.client.Get(ctx, prefix, opts...)
+	// specify an explicit revision and always use it
+	if opt.revision != 0 {
+		rev = opt.revision
+		opts = append(opts, clientv3.WithRev(rev))
+	}
+
+	// it is a key or it is not paging
+	if single {
+		resp, err := c.client.Get(ctx, path, opts...)
 		if err != nil {
 			return 0, err
 		}
-		for _, kv := range resp.Kvs {
-			r := &KeyValue{
-				Key:   kv.Key,
-				Value: kv.Value,
-			}
-			err := opt.response(r)
-			if err != nil {
-				return 0, err
-			}
+
+		err = iterateGetList(resp.Kvs, opt.response)
+		if err != nil {
+			return 0, err
 		}
 		return resp.Header.Revision, nil
 	}
 
-	respchan := make(chan clientv3.GetResponse, 10)
-	errchan := make(chan error, 1)
-	var revision int64
-
-	go func() {
-		defer close(respchan)
-		defer close(errchan)
-
-		var key string
-
-		opts := append(opts, clientv3.WithLimit(opt.pageLimit))
-		if opt.revision != 0 {
-			revision = opt.revision
-			opts = append(opts, clientv3.WithRev(revision))
+	for key := path; ; {
+		resp, err := c.client.Get(ctx, key, opts...)
+		if err != nil {
+			return 0, err
 		}
 
-		if len(prefix) == 0 {
-			// If len(s.prefix) == 0, we will sync the entire key-value space.
-			// We then range from the smallest key (0x00) to the end.
-			opts = append(opts, clientv3.WithFromKey())
-			key = "\x00"
-		} else {
-			// If len(s.prefix) != 0, we will sync key-value space with given prefix.
-			// We then range from the prefix to the next prefix if exists. Or we will
-			// range from the prefix to the end if the next prefix does not exists.
-			opts = append(opts, clientv3.WithRange(clientv3.GetPrefixRangeEnd(prefix)))
-			key = prefix
+		err = iterateGetList(resp.Kvs, opt.response)
+		if err != nil {
+			return 0, err
 		}
 
-		for {
-			resp, err := c.client.Get(ctx, key, opts...)
-			if err != nil {
-				errchan <- err
-				return
-			}
-
-			respchan <- *resp
-
-			if revision == 0 {
-				revision = resp.Header.Revision
-				opts = append(opts, clientv3.WithRev(resp.Header.Revision))
-			}
-
-			if !resp.More {
-				return
-			}
-
-			// move to next key
-			key = string(append(resp.Kvs[len(resp.Kvs)-1].Key, 0))
+		// if revision is not set, it is set to the revision of the first response.
+		if rev == 0 {
+			rev = resp.Header.Revision
+			opts = append(opts, clientv3.WithRev(resp.Header.Revision))
 		}
-	}()
 
-	for resp := range respchan {
-		for _, kv := range resp.Kvs {
-			r := &KeyValue{
-				Key:   kv.Key,
-				Value: kv.Value,
-			}
-			err := opt.response(r)
-			if err != nil {
-				return 0, err
-			}
+		if !resp.More {
+			break
 		}
+
+		// move to next key
+		key = string(append(resp.Kvs[len(resp.Kvs)-1].Key, 0))
 	}
 
-	err = <-errchan
-	if err != nil {
-		return 0, err
-	}
+	return rev, nil
+}
 
-	return revision, nil
+func iterateGetList(kvs []*mvccpb.KeyValue, callback func(kv *KeyValue) error) error {
+	for _, kv := range kvs {
+		err := callback(&KeyValue{
+			Key:   kv.Key,
+			Value: kv.Value,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

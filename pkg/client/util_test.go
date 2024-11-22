@@ -19,7 +19,6 @@ package client
 import (
 	"testing"
 
-	"github.com/etcd-io/auger/pkg/encoding"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -87,6 +86,16 @@ func TestPrefixFromGR(t *testing.T) {
 			wantPrefix: "apiextensions.k8s.io/customresourcedefinitions",
 		},
 		{
+			name: "scheduling.k8s.io",
+			args: args{
+				gr: schema.GroupResource{
+					Group:    "scheduling.k8s.io",
+					Resource: "priorityclasses",
+				},
+			},
+			wantPrefix: "priorityclasses",
+		},
+		{
 			name: "x-k8s.io",
 			args: args{
 				gr: schema.GroupResource{
@@ -99,98 +108,130 @@ func TestPrefixFromGR(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotPrefix, err := PrefixFromGR(tt.args.gr)
+			gotPrefix, err := prefixFromGR(tt.args.gr)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("PrefixFromGR() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("prefixFromGR() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotPrefix != tt.wantPrefix {
-				t.Errorf("PrefixFromGR() gotPrefix = %v, want %v", gotPrefix, tt.wantPrefix)
+				t.Errorf("prefixFromGR() gotPrefix = %v, wantPath %v", gotPrefix, tt.wantPrefix)
 			}
 		})
 	}
 }
 
-func TestMediaTypeFromGR(t *testing.T) {
+func TestGetPrefix(t *testing.T) {
 	type args struct {
-		gr schema.GroupResource
+		prefix    string
+		gr        schema.GroupResource
+		name      string
+		namespace string
 	}
 	tests := []struct {
-		name          string
-		args          args
-		wantMediaType string
-		wantErr       bool
+		name       string
+		args       args
+		wantPath   string
+		wantSingle bool
+		wantErr    bool
 	}{
 		{
-			name: "pod",
+			name: "all",
 			args: args{
+				prefix: "/registry",
+			},
+			wantPath:   "/registry/",
+			wantSingle: false,
+		},
+		{
+			name: "wantSingle pod",
+			args: args{
+				prefix: "/registry",
 				gr: schema.GroupResource{
 					Group:    "",
 					Resource: "pods",
 				},
+				name:      "pod",
+				namespace: "default",
 			},
-			wantMediaType: encoding.StorageBinaryMediaType,
+			wantPath:   "/registry/pods/default/pod",
+			wantSingle: true,
 		},
 		{
-			name: "deployment",
+			name: "pods",
 			args: args{
-				gr: schema.GroupResource{
-					Group:    "apps",
-					Resource: "deployments",
-				},
-			},
-			wantMediaType: encoding.StorageBinaryMediaType,
-		},
-		{
-			name: "service",
-			args: args{
+				prefix: "/registry",
 				gr: schema.GroupResource{
 					Group:    "",
-					Resource: "services",
+					Resource: "pods",
 				},
+				namespace: "default",
 			},
-			wantMediaType: encoding.StorageBinaryMediaType,
+			wantPath:   "/registry/pods/default/",
+			wantSingle: false,
 		},
 		{
-			name: "ingress",
+			name: "wantSingle node",
 			args: args{
+				prefix: "/registry",
 				gr: schema.GroupResource{
-					Group:    "networking.k8s.io",
-					Resource: "ingresses",
+					Group:    "",
+					Resource: "nodes",
 				},
+				name: "node",
 			},
-			wantMediaType: encoding.StorageBinaryMediaType,
+			wantPath:   "/registry/minions/node",
+			wantSingle: true,
 		},
 		{
-			name: "apiextensions.k8s.io",
+			name: "nodes",
 			args: args{
+				prefix: "/registry",
 				gr: schema.GroupResource{
-					Group:    "apiextensions.k8s.io",
-					Resource: "customresourcedefinitions",
+					Group:    "",
+					Resource: "nodes",
 				},
 			},
-			wantMediaType: encoding.JsonMediaType,
+			wantPath:   "/registry/minions/",
+			wantSingle: false,
 		},
 		{
-			name: "x-k8s.io",
+			name: "cr",
 			args: args{
+				prefix: "/registry",
 				gr: schema.GroupResource{
 					Group:    "auger.x-k8s.io",
 					Resource: "foo",
 				},
 			},
-			wantMediaType: encoding.JsonMediaType,
+			wantPath:   "/registry/auger.x-k8s.io/foo/",
+			wantSingle: false,
+		},
+		{
+			name: "apiservices v1.apps",
+			args: args{
+				prefix: "/registry",
+				gr: schema.GroupResource{
+					Group:    "apiregistration.k8s.io",
+					Resource: "apiservices",
+				},
+				name: "v1.apps",
+			},
+			wantPath:   "/registry/apiregistration.k8s.io/apiservices/v1.apps",
+			wantSingle: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotMediaType, err := MediaTypeFromGR(tt.args.gr)
+			gotPath, gotSingle, err := getPrefix(tt.args.prefix, tt.args.gr, tt.args.name, tt.args.namespace)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("MediaTypeFromGR() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("getPrefix() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if gotMediaType != tt.wantMediaType {
-				t.Errorf("MediaTypeFromGR() gotMediaType = %v, want %v", gotMediaType, tt.wantMediaType)
+			if gotPath != tt.wantPath {
+				t.Errorf("getPrefix() gotPath = %v, wantPath %v", gotPath, tt.wantPath)
+			}
+			if gotSingle != tt.wantSingle {
+				t.Errorf("getPrefix() gotSingle = %v, wantSingle %v", gotSingle, tt.wantSingle)
 			}
 		})
 	}

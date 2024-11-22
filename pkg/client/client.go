@@ -154,22 +154,6 @@ type KeyValue struct {
 	PrevValue []byte
 }
 
-// specialDefaultResourcePrefixes are prefixes compiled into Kubernetes.
-// see k8s.io/kubernetes/pkg/kubeapiserver/default_storage_factory_builder.go
-var specialDefaultResourcePrefixes = map[schema.GroupResource]string{
-	{Group: "", Resource: "replicationcontrollers"}:     "controllers",
-	{Group: "", Resource: "endpoints"}:                  "services/endpoints",
-	{Group: "", Resource: "services"}:                   "services/specs",
-	{Group: "", Resource: "nodes"}:                      "minions",
-	{Group: "extensions", Resource: "ingresses"}:        "ingress",
-	{Group: "networking.k8s.io", Resource: "ingresses"}: "ingress",
-}
-
-var specialDefaultMediaTypes = map[string]struct{}{
-	"apiextensions.k8s.io":   {},
-	"apiregistration.k8s.io": {},
-}
-
 // PrefixFromGR returns the prefix of the given GroupResource.
 func PrefixFromGR(gr schema.GroupResource) (prefix string, err error) {
 	groupPrefix := false
