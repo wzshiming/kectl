@@ -22,9 +22,9 @@ import (
 	"os"
 
 	"github.com/etcd-io/auger/pkg/encoding"
-	"github.com/etcd-io/auger/pkg/scheme"
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/wzshiming/kectl/pkg/scheme"
 	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )

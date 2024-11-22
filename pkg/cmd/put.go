@@ -25,9 +25,9 @@ import (
 	"time"
 
 	"github.com/etcd-io/auger/pkg/encoding"
-	"github.com/etcd-io/auger/pkg/scheme"
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/wzshiming/kectl/pkg/scheme"
 	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

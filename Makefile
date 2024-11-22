@@ -1,6 +1,13 @@
 
 .PHONY: generate
-generate: pkg/wellknown/resources.go
+generate: \
+	pkg/wellknown/resources.go \
+	pkg/scheme/scheme.go
+
+pkg/scheme/scheme.go: ./hack/gen_scheme.sh go.mod
+	go mod vendor
+	-rm ./pkg/scheme/scheme.go
+	./hack/gen_scheme.sh > ./pkg/scheme/scheme.go
 
 pkg/wellknown/resources.go: ./hack/gen_wellknown_resources go.mod
 	KWOK_KUBE_VERSION=1.30.3 kwokctl create cluster --name kectl-wellknown \
