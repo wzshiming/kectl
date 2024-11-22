@@ -5,6 +5,7 @@ go 1.22.5
 require (
 	github.com/bgentry/speakeasy v0.2.0
 	github.com/etcd-io/auger v1.0.1-0.20240708032042-ee589cac802a
+	github.com/gogo/protobuf v1.3.2
 	github.com/spf13/cobra v1.8.1
 	go.etcd.io/etcd/api/v3 v3.5.15
 	go.etcd.io/etcd/client/pkg/v3 v3.5.15
@@ -23,7 +24,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect

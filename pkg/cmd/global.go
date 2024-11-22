@@ -33,6 +33,8 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/srv"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
+
+	_ "github.com/wzshiming/kectl/pkg/old/scheme"
 )
 
 type secureCfg struct {
