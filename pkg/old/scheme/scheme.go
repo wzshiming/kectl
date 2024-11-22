@@ -23,6 +23,7 @@ import (
 	discoveryv1alpha1 "github.com/wzshiming/kectl/pkg/old/apis/discovery/v1alpha1"
 	flowcontrolv1alpha1 "github.com/wzshiming/kectl/pkg/old/apis/flowcontrol/v1alpha1"
 	resourcev1alpha1 "github.com/wzshiming/kectl/pkg/old/apis/resource/v1alpha1"
+	resourcev1alpha2 "github.com/wzshiming/kectl/pkg/old/apis/resource/v1alpha2"
 	settingsv1alpha1 "github.com/wzshiming/kectl/pkg/old/apis/settings/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -34,5 +35,6 @@ func AddToScheme(scheme *runtime.Scheme) {
 	_ = discoveryv1alpha1.AddToScheme(scheme)
 	_ = flowcontrolv1alpha1.AddToScheme(scheme)
 	_ = resourcev1alpha1.AddToScheme(scheme)
+	_ = resourcev1alpha2.AddToScheme(scheme)
 	_ = settingsv1alpha1.AddToScheme(scheme)
 }

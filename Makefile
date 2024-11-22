@@ -11,7 +11,7 @@ pkg/scheme/scheme.go: ./hack/gen_scheme.sh go.mod
 	./hack/gen_scheme.sh > ./pkg/scheme/scheme.go
 
 pkg/old/api:
-	./hack/clone_old_apis.sh 30
+	./hack/clone_old_apis.sh 31
 
 pkg/old/scheme/scheme.go: ./hack/gen_old_scheme.sh pkg/old/apis go.mod
 	-rm ./pkg/old/scheme/scheme.go
