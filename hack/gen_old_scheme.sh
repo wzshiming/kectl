@@ -50,7 +50,7 @@ import (
 EOF
 
   for pkg in $(find_package "${ROOT_DIR}/pkg/old/apis"); do
-    echo "${pkg}" | awk -F '/' '{print "	"$1$2, "\"github.com/wzshiming/kectl/pkg/old/apis/"$1"\/"$2"\""}'
+    echo "${pkg}" | awk -F '/' '{print "	"$1$2, "\"github.com/kwok-ci/kectl/pkg/old/apis/"$1"\/"$2"\""}'
   done
 
   cat <<EOF

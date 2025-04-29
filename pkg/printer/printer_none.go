@@ -17,7 +17,7 @@ limitations under the License.
 package printer
 
 import (
-	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/kwok-ci/kectl/pkg/client"
 )
 
 type nonePrinter struct {

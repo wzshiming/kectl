@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/wzshiming/kectl/pkg/cmd"
+	"github.com/kwok-ci/kectl/pkg/cmd"
 )
 
 func main() {

@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kwok-ci/kectl/pkg/client"
+	"github.com/kwok-ci/kectl/pkg/printer"
+	"github.com/kwok-ci/kectl/pkg/wellknown"
 	"github.com/spf13/cobra"
-	"github.com/wzshiming/kectl/pkg/client"
-	"github.com/wzshiming/kectl/pkg/printer"
-	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 

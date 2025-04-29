@@ -20,8 +20,8 @@ import (
 	"io"
 
 	"github.com/etcd-io/auger/pkg/encoding"
-	"github.com/wzshiming/kectl/pkg/client"
-	"github.com/wzshiming/kectl/pkg/scheme"
+	"github.com/kwok-ci/kectl/pkg/client"
+	"github.com/kwok-ci/kectl/pkg/scheme"
 )
 
 type jsonPrinter struct {

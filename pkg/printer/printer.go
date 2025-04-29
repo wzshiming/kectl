@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/kwok-ci/kectl/pkg/client"
 )
 
 type Printer interface {

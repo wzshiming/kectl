@@ -17,7 +17,7 @@ limitations under the License.
 package scheme
 
 import (
-	"github.com/wzshiming/kectl/pkg/scheme"
+	"github.com/kwok-ci/kectl/pkg/scheme"
 )
 
 func init() {
