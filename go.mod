@@ -7,9 +7,9 @@ require (
 	github.com/etcd-io/auger v1.0.1-0.20240708032042-ee589cac802a
 	github.com/gogo/protobuf v1.3.2
 	github.com/spf13/cobra v1.8.1
-	go.etcd.io/etcd/api/v3 v3.5.17
-	go.etcd.io/etcd/client/pkg/v3 v3.5.17
-	go.etcd.io/etcd/client/v3 v3.5.17
+	go.etcd.io/etcd/api/v3 v3.5.21
+	go.etcd.io/etcd/client/pkg/v3 v3.5.21
+	go.etcd.io/etcd/client/v3 v3.5.21
 	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
 	k8s.io/client-go v0.33.0
