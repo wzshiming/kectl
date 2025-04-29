@@ -410,11 +410,28 @@ var resources = []resource{
 	},
 	{
 		Names: []string{
+			"ipaddresses",
+			"ipaddress",
+			"ip",
+		},
+		Namespaced: false,
+		Group:      "networking.k8s.io",
+	},
+	{
+		Names: []string{
 			"networkpolicies",
 			"networkpolicy",
 			"netpol",
 		},
 		Namespaced: true,
+		Group:      "networking.k8s.io",
+	},
+	{
+		Names: []string{
+			"servicecidrs",
+			"servicecidr",
+		},
+		Namespaced: false,
 		Group:      "networking.k8s.io",
 	},
 	{
