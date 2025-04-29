@@ -31,3 +31,6 @@ pkg/wellknown/resources.go: ./hack/gen_wellknown_resources go.mod
 	kwokctl delete cluster --name kectl-wellknown \
 		--kubeconfig ./kectl-wellknown.kubeconfig
 	rm ./kectl-wellknown.kubeconfig
+
+bin/kectl:
+	go build -o bin/kectl ./cmd/kectl
