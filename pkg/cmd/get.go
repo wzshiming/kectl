@@ -21,10 +21,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/etcd-io/auger/pkg/encoding"
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
-	"github.com/wzshiming/kectl/pkg/scheme"
+	"github.com/wzshiming/kectl/pkg/printer"
 	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -60,7 +59,7 @@ func newCtlGetCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&flags.Output, "output", "o", "yaml", "output format. One of: (json, yaml, raw, key).")
+	cmd.Flags().StringVarP(&flags.Output, "output", "o", "key", "output format. One of: (json, yaml, key, none).")
 	cmd.Flags().StringVarP(&flags.Namespace, "namespace", "n", "", "namespace of resource")
 	cmd.Flags().BoolVarP(&flags.Watch, "watch", "w", false, "after listing/getting the requested object, watch for changes")
 	cmd.Flags().BoolVar(&flags.WatchOnly, "watch-only", false, "watch for changes to the requested object(s), without listing/getting first")
@@ -100,82 +99,32 @@ func getCommand(ctx context.Context, etcdclient client.Client, flags *getFlagpol
 		}
 	}
 
-	var count int
-	var response func(kv *client.KeyValue) error
-
-	switch flags.Output {
-	case "json":
-		outMediaType := encoding.JsonMediaType
-		response = func(kv *client.KeyValue) error {
-			count++
-			value := kv.Value
-			if value == nil {
-				value = kv.PrevValue
-			}
-			inMediaType, _, err := encoding.DetectAndExtract(value)
-			if err != nil {
-				fmt.Fprintf(os.Stdout, "---\n# %s | raw | %v\n# %s\n", kv.Key, err, value)
-				return nil
-			}
-			data, _, err := encoding.Convert(scheme.Codecs, inMediaType, outMediaType, value)
-			if err != nil {
-				fmt.Fprintf(os.Stdout, "---\n# %s | raw | %v\n# %s\n", kv.Key, err, value)
-			} else {
-				fmt.Fprintf(os.Stdout, "---\n# %s | %s\n%s\n", kv.Key, inMediaType, data)
-			}
-			return nil
-		}
-	case "yaml":
-		outMediaType := encoding.YamlMediaType
-		response = func(kv *client.KeyValue) error {
-			count++
-			value := kv.Value
-			if value == nil {
-				value = kv.PrevValue
-			}
-			inMediaType, _, err := encoding.DetectAndExtract(value)
-			if err != nil {
-				fmt.Fprintf(os.Stdout, "---\n# %s | raw | %v\n# %s\n", kv.Key, err, value)
-				return nil
-			}
-			data, _, err := encoding.Convert(scheme.Codecs, inMediaType, outMediaType, value)
-			if err != nil {
-				fmt.Fprintf(os.Stdout, "---\n# %s | raw | %v\n# %s\n", kv.Key, err, value)
-			} else {
-				fmt.Fprintf(os.Stdout, "---\n# %s | %s\n%s\n", kv.Key, inMediaType, data)
-			}
-			return nil
-		}
-	case "raw":
-		response = func(kv *client.KeyValue) error {
-			count++
-			fmt.Fprintf(os.Stdout, "%s\n%s\n", kv.Key, kv.Value)
-			return nil
-		}
-	case "key":
-		response = func(kv *client.KeyValue) error {
-			count++
-			fmt.Fprintf(os.Stdout, "%s\n", kv.Key)
-			return nil
-		}
-	default:
-		return fmt.Errorf("unsupported output format: %s", flags.Output)
-	}
-
 	opOpts := []client.OpOption{
 		client.WithName(targetName, targetNamespace),
 		client.WithGR(targetGr),
 		client.WithPageLimit(flags.ChunkSize),
-		client.WithResponse(response),
 	}
 
+	p, err := printer.NewPrinter(os.Stdout, flags.Output)
+	if err != nil {
+		return err
+	}
+
+	var count int
 	if flags.Output == "key" {
 		opOpts = append(opOpts,
+			client.WithResponse(func(kv *client.KeyValue) error {
+				count++
+				return p.Print(kv)
+			}),
 			client.WithKeysOnly(),
+		)
+	} else {
+		opOpts = append(opOpts,
+			client.WithResponse(p.Print),
 		)
 	}
 
-	var err error
 	if flags.Watch {
 		var rev int64
 		if !flags.WatchOnly {

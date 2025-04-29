@@ -27,6 +27,7 @@ import (
 	"github.com/etcd-io/auger/pkg/encoding"
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/wzshiming/kectl/pkg/printer"
 	"github.com/wzshiming/kectl/pkg/scheme"
 	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -66,7 +67,7 @@ func newCtlPutCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&flags.Output, "output", "o", "key", "output format. One of: (key, none).")
+	cmd.Flags().StringVarP(&flags.Output, "output", "o", "key", "output format. One of: (json, yaml, key, none).")
 	cmd.Flags().StringVarP(&flags.Namespace, "namespace", "n", "", "namespace of resource")
 	cmd.Flags().StringVar(&flags.Prefix, "prefix", "/registry", "prefix to prepend to the resource")
 	cmd.Flags().StringVar(&flags.Path, "path", "", "path of the file")
@@ -120,16 +121,9 @@ func putCommand(ctx context.Context, etcdclient client.Client, flags *putFlagpol
 	start := time.Now()
 
 	var count int
-	var response func(kv *client.KeyValue) error
-	if flags.Output == "key" {
-		//nolint:unparam
-		response = func(kv *client.KeyValue) error {
-			count++
-			if kv != nil {
-				fmt.Fprintf(os.Stdout, "%s\n", kv.Key)
-			}
-			return nil
-		}
+	p, err := printer.NewPrinter(os.Stdout, flags.Output)
+	if err != nil {
+		return err
 	}
 
 	err = decodeToUnstructured(reader, func(obj *unstructured.Unstructured) error {
@@ -191,10 +185,17 @@ func putCommand(ctx context.Context, etcdclient client.Client, flags *putFlagpol
 			client.WithGR(targetGr),
 		}
 
-		if response != nil {
+		if flags.Output == "key" {
 			opOpts = append(opOpts,
-				client.WithResponse(response),
+				client.WithResponse(func(kv *client.KeyValue) error {
+					count++
+					return p.Print(kv)
+				}),
 				client.WithKeysOnly(),
+			)
+		} else {
+			opOpts = append(opOpts,
+				client.WithResponse(p.Print),
 			)
 		}
 

@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/kectl/pkg/client"
+	"github.com/wzshiming/kectl/pkg/printer"
 	"github.com/wzshiming/kectl/pkg/wellknown"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -55,7 +56,7 @@ func newCtlDelCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&flags.Output, "output", "o", "key", "output format. One of: (key, none).")
+	cmd.Flags().StringVarP(&flags.Output, "output", "o", "key", "output format. One of: (json, yaml, key, none).")
 	cmd.Flags().StringVarP(&flags.Namespace, "namespace", "n", "", "namespace of resource")
 	cmd.Flags().StringVar(&flags.Prefix, "prefix", "/registry", "prefix to prepend to the resource")
 	cmd.Flags().BoolVarP(&flags.AllNamespace, "all-namespace", "A", false, "all namespace")
@@ -92,29 +93,32 @@ func delCommand(ctx context.Context, etcdclient client.Client, flags *delFlagpol
 		}
 	}
 
-	var count int
-	var response func(kv *client.KeyValue) error
-	if flags.Output == "key" {
-		response = func(kv *client.KeyValue) error {
-			count++
-			fmt.Fprintf(os.Stdout, "%s\n", kv.Key)
-			return nil
-		}
-	}
-
 	opOpts := []client.OpOption{
 		client.WithName(targetName, targetNamespace),
 		client.WithGR(targetGr),
 	}
 
-	if response != nil {
+	p, err := printer.NewPrinter(os.Stdout, flags.Output)
+	if err != nil {
+		return err
+	}
+
+	var count int
+	if flags.Output == "key" {
 		opOpts = append(opOpts,
+			client.WithResponse(func(kv *client.KeyValue) error {
+				count++
+				return p.Print(kv)
+			}),
 			client.WithKeysOnly(),
-			client.WithResponse(response),
+		)
+	} else {
+		opOpts = append(opOpts,
+			client.WithResponse(p.Print),
 		)
 	}
 
-	err := etcdclient.Delete(ctx, flags.Prefix,
+	err = etcdclient.Delete(ctx, flags.Prefix,
 		opOpts...,
 	)
 	if err != nil {
