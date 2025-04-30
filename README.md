@@ -2,9 +2,7 @@
 
 Control Kubernetes objects from Etcd, used to prove concepts.
 
-It may be merged with [etcd-io/auger#62](https://github.com/etcd-io/auger/pull/62),
-or it may be moved to [etcd](https://github.com/etcd-io) as a new repo,
-or it may just stay as it is now.
+This project was inspired by [jpbetz/auger](https://github.com/jpbetz/auger) and [etcd-io/auger](https://github.com/etcd-io/auger)
 
 ## Usage
 
