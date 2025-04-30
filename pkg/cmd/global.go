@@ -33,6 +33,7 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/srv"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"golang.org/x/term"
 
 	_ "github.com/kwok-ci/kectl/pkg/old/scheme"
 )
@@ -335,4 +336,9 @@ func endpointsFromFlagValue(cmd *cobra.Command) ([]string, error) {
 		ret = append(ret, ep)
 	}
 	return ret, err
+}
+
+// isTerminal returns true if the given file descriptor is a terminal.
+func isTerminal() bool {
+	return term.IsTerminal(int(os.Stdout.Fd()))
 }

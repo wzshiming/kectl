@@ -77,6 +77,9 @@ func NewCtlCommand() *cobra.Command {
 		newCtlGetCommand(),
 		newCtlDelCommand(),
 		newCtlPutCommand(),
+
+		newCtlRecordCommand(),
+		newCtlReplayCommand(),
 	)
 	return cmd
 }
