@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/etcd-io/auger/pkg/encoding"
 	"github.com/kwok-ci/kectl/pkg/client"
+	"github.com/kwok-ci/kectl/pkg/encoding"
 	"github.com/kwok-ci/kectl/pkg/scheme"
 )
 
@@ -32,7 +32,7 @@ type yamlPrinter struct {
 
 func (p *yamlPrinter) Print(kv *client.KeyValue) error {
 	value := kv.Value
-	inMediaType, _, err := encoding.DetectAndExtract(value)
+	inMediaType, err := encoding.DetectMediaType(value)
 	if err != nil {
 		_, err0 := fmt.Fprintf(p.w, "---\n# %s | raw | %v\n# %s\n", kv.Key, err, value)
 		if err0 != nil {
@@ -40,7 +40,7 @@ func (p *yamlPrinter) Print(kv *client.KeyValue) error {
 		}
 		return nil
 	}
-	data, _, err := encoding.Convert(scheme.Codecs, inMediaType, encoding.YamlMediaType, value)
+	_, data, err := encoding.Convert(scheme.Codecs, inMediaType, encoding.YAMLMediaType, value)
 	if err != nil {
 		_, err0 := fmt.Fprintf(p.w, "---\n# %s | raw | %v\n# %s\n", kv.Key, err, value)
 		if err0 != nil {

@@ -20,7 +20,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/etcd-io/auger/pkg/encoding"
+	"github.com/kwok-ci/kectl/pkg/encoding"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -181,7 +181,7 @@ func PrefixFromGR(gr schema.GroupResource) (prefix string, err error) {
 
 // MediaTypeFromGR returns the media type of the given GroupResource.
 func MediaTypeFromGR(gr schema.GroupResource) (mediaType string, err error) {
-	mediaType = encoding.JsonMediaType
+	mediaType = encoding.JSONMediaType
 
 	if _, ok := specialDefaultMediaTypes[gr.Group]; ok {
 		return mediaType, nil

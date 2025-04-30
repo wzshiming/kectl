@@ -24,8 +24,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/etcd-io/auger/pkg/encoding"
 	"github.com/kwok-ci/kectl/pkg/client"
+	"github.com/kwok-ci/kectl/pkg/encoding"
 	"github.com/kwok-ci/kectl/pkg/printer"
 	"github.com/kwok-ci/kectl/pkg/scheme"
 	"github.com/kwok-ci/kectl/pkg/wellknown"
@@ -175,7 +175,7 @@ func putCommand(ctx context.Context, etcdclient client.Client, flags *putFlagpol
 			return err
 		}
 
-		data, _, err = encoding.Convert(scheme.Codecs, encoding.JsonMediaType, mediaType, data)
+		_, data, err = encoding.Convert(scheme.Codecs, encoding.JSONMediaType, mediaType, data)
 		if err != nil {
 			return err
 		}

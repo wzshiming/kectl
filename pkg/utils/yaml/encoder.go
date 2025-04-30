@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The Kubernetes Authors.
+Copyright 2023 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,33 +14,46 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package printer
+package yaml
 
 import (
 	"io"
-
-	"github.com/kwok-ci/kectl/pkg/client"
-	"github.com/kwok-ci/kectl/pkg/encoding"
-	"github.com/kwok-ci/kectl/pkg/scheme"
+	"sync/atomic"
 )
 
-type jsonPrinter struct {
-	w io.Writer
+// Encoder is a YAML encoder.
+type Encoder struct {
+	printCount int64
+	w          io.Writer
 }
 
-func (p *jsonPrinter) Print(kv *client.KeyValue) error {
-	value := kv.Value
-	inMediaType, err := encoding.DetectMediaType(value)
+// NewEncoder returns a new YAML printer.
+func NewEncoder(w io.Writer) *Encoder {
+	return &Encoder{
+		w: w,
+	}
+}
+
+var separator = []byte("---\n")
+
+// Encode prints the object as YAML.
+func (p *Encoder) Encode(obj any) error {
+	count := atomic.AddInt64(&p.printCount, 1)
+	if count > 1 {
+		if _, err := p.w.Write(separator); err != nil {
+			return err
+		}
+	}
+
+	output, err := Marshal(obj)
 	if err != nil {
 		return err
 	}
-	_, data, err := encoding.Convert(scheme.Codecs, inMediaType, encoding.JSONMediaType, value)
+
+	_, err = p.w.Write(output)
 	if err != nil {
 		return err
 	}
-	_, err = p.w.Write(data)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
