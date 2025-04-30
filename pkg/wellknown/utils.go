@@ -17,6 +17,8 @@ limitations under the License.
 package wellknown
 
 import (
+	"strings"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -37,6 +39,7 @@ func init() {
 // CorrectGroupResource returns the corrected GroupResource and namespaced
 func CorrectGroupResource(target schema.GroupResource) (gr schema.GroupResource, namespaced bool, found bool) {
 	var r *resource
+	target.Resource = strings.ToLower(target.Resource)
 	if target.Group == "" {
 		r, found = nameToResource[target.Resource]
 	} else {
