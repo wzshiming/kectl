@@ -55,6 +55,11 @@ func (c *client) Put(ctx context.Context, prefix string, value []byte, opOpts ..
 				Value:     value,
 				PrevValue: resp.PrevKv.Value,
 			}
+		} else {
+			r = &KeyValue{
+				Key:   []byte(prefix),
+				Value: value,
+			}
 		}
 		err = opt.response(r)
 		if err != nil {
