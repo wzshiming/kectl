@@ -77,6 +77,8 @@ func NewCtlCommand() *cobra.Command {
 		newCtlGetCommand(),
 		newCtlDelCommand(),
 		newCtlPutCommand(),
+
+		newCtlSnapshotCommand(),
 	)
 	return cmd
 }
