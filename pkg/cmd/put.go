@@ -35,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -165,6 +166,11 @@ func putCommand(ctx context.Context, etcdclient client.Client, flags *putFlagpol
 		t := obj.GetCreationTimestamp()
 		if t.IsZero() {
 			obj.SetCreationTimestamp(metav1.Time{Time: start})
+		}
+
+		uid := obj.GetUID()
+		if uid == "" {
+			obj.SetUID(uuid.NewUUID())
 		}
 
 		obj.SetResourceVersion("")
