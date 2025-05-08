@@ -39,9 +39,10 @@ func newCtlDelCommand() *cobra.Command {
 	flags := &delFlagpole{}
 
 	cmd := &cobra.Command{
-		Args:  cobra.RangeArgs(0, 2),
-		Use:   "del [resource] [name]",
-		Short: "Deletes the resource of k8s in etcd",
+		Args:    cobra.RangeArgs(0, 2),
+		Use:     "delete [resource] [name]",
+		Aliases: []string{"del"},
+		Short:   "Deletes the resource of k8s in etcd",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			etcdclient, err := clientFromCmd(cmd)
 			if err != nil {
